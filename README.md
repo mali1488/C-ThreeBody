@@ -1,8 +1,10 @@
 Only tested on macOS.
 
-## How to run
+### Preview
 
-https://github.com/mali1488/C-ThreeBody/assets/5981190/1613b229-b4c1-4a0e-b6f4-066c35a9a0fc
+https://github.com/mali1488/C-ThreeBody/assets/5981190/4efbb407-a749-4358-8bf4-5b0cbe5a63f3
+
+## How to run
 
 ```bash
 ./build.sh
