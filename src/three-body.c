@@ -18,7 +18,6 @@
 
 typedef struct {
   float mass;
-  
   float x;
   float y;
   float z;
