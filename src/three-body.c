@@ -4,6 +4,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include <time.h>
+#include <limits.h>
 #include "raylib.h"
 
 #define WIDTH 800
@@ -33,7 +34,7 @@ float distance(Body* a, Body* b) {
 }
 
 void apply_forces(Body* stars, int n, float dt) {
-  for(int i = 0; i < n; i++) {
+  for(size_t i = 0; i < n; i++) {
     float m = stars[i].mass;
     stars[i].fy = (-G * m) * stars[i].fy;
     stars[i].fx = (-G * m) * stars[i].fx;
@@ -72,8 +73,8 @@ void force(Body* s1, Body* s2) {
 }
 
 void sim(Body* bodies, int n, float dt) {
-  for(int i = 0; i < n; i++) {
-    for(int j = 0; j < n; j++) {
+  for(size_t i = 0; i < n; i++) {
+    for(size_t j = 0; j < n; j++) {
       if (i == j) continue;
       force(&bodies[i], &bodies[j]);
       apply_forces(bodies, 3, dt);
@@ -112,20 +113,53 @@ void init_bodies(Body* bodies) {
   bodies[2].color = DARKPURPLE;
 }
 
+Vector2 get_camera_pos(Body* bodies, int n) {
+  int max_x = 0;
+  int min_x = INT_MAX;
+  int max_y = 0;
+  int min_y = INT_MAX;
+  for (size_t i = 0; i < n; i++) {
+    Body b = bodies[i];
+    if (b.x > max_x) max_x = b.x;
+    if (b.x < min_x) min_x = b.x;
+
+    if (b.y > max_y) max_y = b.y;
+    if (b.y < min_y) min_y = b.y;
+  }
+  return (Vector2) { min_x + (max_x - min_x) / 2, min_y + (max_y - min_y) / 2 };
+}
+
+// 0.......................................500
+//      100..125...150.....................500
+
 int main(void) {
   Body bodies[N] = {0};
   init_bodies(&bodies);
   
   InitWindow(WIDTH, HEIGHT, "Three-body");
   SetTargetFPS(60);
-
-  while (!WindowShouldClose()) { 
+  Camera2D camera = { 0 };
+  // camera.target = (Vector2){ WIDTH / 2, HEIGHT / 2 };
+  // camera.target = (Vector2){ 0, 0 };
+  camera.offset = (Vector2){ 0, 0 };
+  // camera.offset = //(Vector2){ WIDTH / 4, HEIGHT / 4 };
+  // camera.offset = (Vector2){ WIDTH, HEIGHT };
+  camera.rotation = 0.0f;
+  camera.zoom = 1.0f;
+  while (!WindowShouldClose()) {
+    //camera.offset = 
     BeginDrawing();
+    Vector2 pos = get_camera_pos(&bodies, N);
+    camera.target = pos;
+    camera.offset = pos;
+    printf("%f, %f \n", pos.x, pos.y);
+    BeginMode2D(camera);
       ClearBackground(BLACK);
       sim(bodies, N, GetFrameTime());
-      for(int i = 0; i < N; i++) {
+      for(size_t i = 0; i < N; i++) {
         draw_body(bodies[i]);
       }
+    EndMode2D();
     EndDrawing();
   }
 }
