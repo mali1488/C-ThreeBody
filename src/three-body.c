@@ -56,37 +56,38 @@ float distance(Body* a, Body* b) {
   return sqrt(pow((b->x - a->x), 2) + pow((b->y - a->y), 2) + pow((b->z - a->z), 2));
 }
 
-void apply_forces(Body* stars, size_t n, float dt) {
+void apply_forces(Body* bodies, size_t n, float dt) {
   for(size_t i = 0; i < n; i++) {
-    float m = stars[i].mass;
-    stars[i].fy = (-G * m) * stars[i].fy;
-    stars[i].fx = (-G * m) * stars[i].fx;
-    stars[i].fz = (-G * m) * stars[i].fz;
+    Body* b = &bodies[i];
+    float m = b->mass;
+    b->fy = (-G * m) * b->fy;
+    b->fx = (-G * m) * b->fx;
+    b->fz = (-G * m) * b->fz;
 
-    float ax = stars[i].fy / m;
-    float ay = stars[i].fx / m;
-    float az = stars[i].fz / m;
+    float ax = b->fy / m;
+    float ay = b->fx / m;
+    float az = b->fz / m;
     
-    stars[i].vx += dt * ax;
-    stars[i].vy += dt * ay;
-    stars[i].vz += dt * az;
+    b->vx += dt * ax;
+    b->vy += dt * ay;
+    b->vz += dt * az;
 
-    Vector2 ct = stars[i].trail[stars[i].trail_pos];
-    if ((int)ct.x != (int)stars[i].x || (int)ct.y != (int)stars[i].y) {
-      stars[i].trail[stars[i].trail_pos] = (Vector2) {
-        .x = stars[i].x,
-        .y = stars[i].y
+    Vector2 ct = b->trail[b->trail_pos];
+    if ((int)ct.x != (int)b->x || (int)ct.y != (int)b->y) {
+      b->trail[b->trail_pos] = (Vector2) {
+        .x = b->x,
+        .y = b->y
       };
-      stars[i].trail_pos = (stars[i].trail_pos + 1) % TRAIL_LENGTH;
+      b->trail_pos = (b->trail_pos + 1) % TRAIL_LENGTH;
     }
 
-    stars[i].x += dt * stars[i].vx;
-    stars[i].y += dt * stars[i].vy;
-    stars[i].z += dt * stars[i].vz;
+    b->x += dt * b->vx;
+    b->y += dt * b->vy;
+    b->z += dt * b->vz;
 
-    stars[i].fy = 0.0;
-    stars[i].fx = 0.0;
-    stars[i].fz = 0.0;
+    b->fy = 0.0;
+    b->fx = 0.0;
+    b->fz = 0.0;
   }
 }
 
