@@ -15,6 +15,7 @@
 #define G 6.67300e-11
 #define EPS 10
 #define N 3
+#define TRAIL_LENGTH 1000
 
 typedef struct {
   float mass;
@@ -27,6 +28,8 @@ typedef struct {
   float fx;
   float fy;
   float fz;
+  Vector3 trail[TRAIL_LENGTH];
+  size_t trail_pos;
   Color color;
 } Body;
 
@@ -34,6 +37,10 @@ void draw_body(Body body) {
   float s = body.z * 0.015;
   if (s < 1) s = 1;
   DrawCircle(body.x + s/2, body.y + s/2, s, body.color);
+  for (size_t i = 0; i < TRAIL_LENGTH; i++) {
+    Vector3 trail = body.trail[i];
+    DrawRectangle(trail.x, trail.y, 1, 1, body.color);
+  }
 }
 
 float distance(Body* a, Body* b) {
@@ -54,6 +61,16 @@ void apply_forces(Body* stars, size_t n, float dt) {
     stars[i].vx += dt * ax;
     stars[i].vy += dt * ay;
     stars[i].vz += dt * az;
+
+    Vector3 ct = stars[i].trail[stars[i].trail_pos];
+    if ((int)ct.x != (int)stars[i].x || (int)ct.y != (int)stars[i].y) {
+      stars[i].trail[stars[i].trail_pos] = (Vector3) {
+        .x = stars[i].x,
+        .y = stars[i].y,
+        .z = stars[i].z,
+      };
+      stars[i].trail_pos = (stars[i].trail_pos + 1) % TRAIL_LENGTH;
+    }
 
     stars[i].x += dt * stars[i].vx;
     stars[i].y += dt * stars[i].vy;
@@ -90,7 +107,7 @@ void sim(Body* bodies, size_t n, float dt) {
 }
 
 void init_bodies(Body* bodies) {
-  float mass = 1000000000000;
+  float mass = 5000000000000;
 
   float cx = WIDTH / 2;
   float cy = HEIGHT / 2;
@@ -139,7 +156,7 @@ int main(void) {
   Camera2D camera = { 0 };
   camera.offset = (Vector2){ WIDTH / 2, HEIGHT / 2 };
   camera.rotation = 0.0f;
-  camera.zoom = 2.0f;
+  camera.zoom = 1.0f;
   while (!WindowShouldClose()) {
     BeginDrawing();
       camera.target = get_camera_pos(bodies, N);
