@@ -116,7 +116,6 @@ void sim(Body* bodies, size_t n, float dt) {
 
 void init_bodies(Body* bodies) {
   float mass = 5000000000000;
-
   float cx = WIDTH / 2;
   float cy = HEIGHT / 2;
   float p = 80;
