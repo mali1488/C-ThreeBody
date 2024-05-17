@@ -28,19 +28,28 @@ typedef struct {
   float fx;
   float fy;
   float fz;
-  Vector3 trail[TRAIL_LENGTH];
+  Vector2 trail[TRAIL_LENGTH];
   size_t trail_pos;
   Color color;
 } Body;
 
+void draw_body_trail(Body body) {
+  for (size_t i = 0; i < TRAIL_LENGTH - 1; i++) {
+    size_t index = (body.trail_pos + i) % TRAIL_LENGTH;
+    Vector2 c = body.trail[index];
+    if (Vector2Equals(c, Vector2Zero())) {
+      continue;
+    }
+    Vector2 cn = body.trail[(index + 1) % TRAIL_LENGTH];
+    DrawLineBezier(c, cn, 1, body.color);
+  }
+}
+
 void draw_body(Body body) {
-  float s = body.z * 0.015;
+  float s = body.z * 0.02;
   if (s < 1) s = 1;
   DrawCircle(body.x + s/2, body.y + s/2, s, body.color);
-  for (size_t i = 0; i < TRAIL_LENGTH; i++) {
-    Vector3 trail = body.trail[i];
-    DrawRectangle(trail.x, trail.y, 1, 1, body.color);
-  }
+  draw_body_trail(body);
 }
 
 float distance(Body* a, Body* b) {
@@ -62,12 +71,11 @@ void apply_forces(Body* stars, size_t n, float dt) {
     stars[i].vy += dt * ay;
     stars[i].vz += dt * az;
 
-    Vector3 ct = stars[i].trail[stars[i].trail_pos];
+    Vector2 ct = stars[i].trail[stars[i].trail_pos];
     if ((int)ct.x != (int)stars[i].x || (int)ct.y != (int)stars[i].y) {
-      stars[i].trail[stars[i].trail_pos] = (Vector3) {
+      stars[i].trail[stars[i].trail_pos] = (Vector2) {
         .x = stars[i].x,
-        .y = stars[i].y,
-        .z = stars[i].z,
+        .y = stars[i].y
       };
       stars[i].trail_pos = (stars[i].trail_pos + 1) % TRAIL_LENGTH;
     }
@@ -111,24 +119,24 @@ void init_bodies(Body* bodies) {
 
   float cx = WIDTH / 2;
   float cy = HEIGHT / 2;
-  float p = 20;
+  float p = 80;
   bodies[0].x = cx - p,
   bodies[0].y = cy - p,
   bodies[0].z = 250,
   bodies[0].mass = mass,
-  bodies[0].color = BEIGE;
+  bodies[0].color = MAROON;
   
   bodies[1].x = cx + p,
   bodies[1].y = cy + p,
   bodies[1].z = 100,
   bodies[1].mass = mass*0.7,
-  bodies[1].color = DARKBROWN;
+  bodies[1].color = GOLD;
   
   bodies[2].x = cx + p,
   bodies[2].y = cy - p,
   bodies[2].z = 0,
   bodies[2].mass = mass*0.6,
-  bodies[2].color = DARKPURPLE;
+  bodies[2].color = SKYBLUE;
 }
 
 Vector2 get_camera_pos(Body* bodies, size_t n) {
