@@ -4,9 +4,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include <time.h>
-
 #include "raylib.h"
-
 
 #define WIDTH 800
 #define HEIGHT 600
