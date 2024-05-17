@@ -6,6 +6,7 @@
 #include <time.h>
 #include <limits.h>
 #include "raylib.h"
+#include "raymath.h"
 
 #define WIDTH 800
 #define HEIGHT 600
@@ -17,6 +18,7 @@
 
 typedef struct {
   float mass;
+  
   float x;
   float y;
   float z;
@@ -29,11 +31,17 @@ typedef struct {
   Color color;
 } Body;
 
+void draw_body(Body body) {
+  float s = body.z * 0.015;
+  if (s < 1) s = 1;
+  DrawCircle(body.x + s/2, body.y + s/2, s, body.color);
+}
+
 float distance(Body* a, Body* b) {
   return sqrt(pow((b->x - a->x), 2) + pow((b->y - a->y), 2) + pow((b->z - a->z), 2));
 }
 
-void apply_forces(Body* stars, int n, float dt) {
+void apply_forces(Body* stars, size_t n, float dt) {
   for(size_t i = 0; i < n; i++) {
     float m = stars[i].mass;
     stars[i].fy = (-G * m) * stars[i].fy;
@@ -65,14 +73,14 @@ void force(Body* s1, Body* s2) {
   float delta_z = s1->z - s2->z;
 
   float m = s1->mass * s2->mass * G;
-  float ds = pow(abs(d) + EPS, 3);
+  float ds = pow(fabs(d) + EPS, 3);
 
   s1->fy += (m * delta_x) / ds;
   s1->fx += (m * delta_y) / ds;
   s1->fz += (m * delta_z) / ds;
 }
 
-void sim(Body* bodies, int n, float dt) {
+void sim(Body* bodies, size_t n, float dt) {
   for(size_t i = 0; i < n; i++) {
     for(size_t j = 0; j < n; j++) {
       if (i == j) continue;
@@ -82,14 +90,8 @@ void sim(Body* bodies, int n, float dt) {
   }
 }
 
-void draw_body(Body body) {
-  float s = body.z * 0.02;
-  if (s < 1) s = 1;
-  DrawCircle(body.x + s/2, body.y + s/2, s, body.color);
-}
-
 void init_bodies(Body* bodies) {
-  float mass = 10000000000000;
+  float mass = 1000000000000;
 
   float cx = WIDTH / 2;
   float cy = HEIGHT / 2;
@@ -102,7 +104,7 @@ void init_bodies(Body* bodies) {
   
   bodies[1].x = cx + p,
   bodies[1].y = cy + p,
-  bodies[1].z = 250,
+  bodies[1].z = 100,
   bodies[1].mass = mass*0.7,
   bodies[1].color = DARKBROWN;
   
@@ -113,7 +115,7 @@ void init_bodies(Body* bodies) {
   bodies[2].color = DARKPURPLE;
 }
 
-Vector2 get_camera_pos(Body* bodies, int n) {
+Vector2 get_camera_pos(Body* bodies, size_t n) {
   int max_x = 0;
   int min_x = INT_MAX;
   int max_y = 0;
@@ -129,37 +131,26 @@ Vector2 get_camera_pos(Body* bodies, int n) {
   return (Vector2) { min_x + (max_x - min_x) / 2, min_y + (max_y - min_y) / 2 };
 }
 
-// 0.......................................500
-//      100..125...150.....................500
-
 int main(void) {
   Body bodies[N] = {0};
-  init_bodies(&bodies);
+  init_bodies(bodies);
   
   InitWindow(WIDTH, HEIGHT, "Three-body");
   SetTargetFPS(60);
   Camera2D camera = { 0 };
-  // camera.target = (Vector2){ WIDTH / 2, HEIGHT / 2 };
-  // camera.target = (Vector2){ 0, 0 };
-  camera.offset = (Vector2){ 0, 0 };
-  // camera.offset = //(Vector2){ WIDTH / 4, HEIGHT / 4 };
-  // camera.offset = (Vector2){ WIDTH, HEIGHT };
+  camera.offset = (Vector2){ WIDTH / 2, HEIGHT / 2 };
   camera.rotation = 0.0f;
-  camera.zoom = 1.0f;
+  camera.zoom = 2.0f;
   while (!WindowShouldClose()) {
-    //camera.offset = 
     BeginDrawing();
-    Vector2 pos = get_camera_pos(&bodies, N);
-    camera.target = pos;
-    camera.offset = pos;
-    printf("%f, %f \n", pos.x, pos.y);
-    BeginMode2D(camera);
-      ClearBackground(BLACK);
-      sim(bodies, N, GetFrameTime());
-      for(size_t i = 0; i < N; i++) {
-        draw_body(bodies[i]);
-      }
-    EndMode2D();
+      camera.target = get_camera_pos(bodies, N);
+      BeginMode2D(camera);
+        ClearBackground(BLACK);
+        sim(bodies, N, GetFrameTime());
+        for(size_t i = 0; i < N; i++) {
+          draw_body(bodies[i]);
+        }
+      EndMode2D();
     EndDrawing();
   }
 }
