@@ -115,28 +115,23 @@ void sim(Body* bodies, size_t n, float dt) {
   }
 }
 
+void init_body(Body* b, float x, float y, float z, float mass, Color c) {
+  *b = (Body) {0};
+  b->x = x;
+  b->y = y;
+  b->z = z;
+  b->mass = mass;
+  b->color = c;
+}
+
 void init_bodies(Body* bodies) {
   float mass = 5000000000000;
   float cx = WIDTH / 2;
   float cy = HEIGHT / 2;
   float p = 80;
-  bodies[0].x = cx - p,
-  bodies[0].y = cy - p,
-  bodies[0].z = 250,
-  bodies[0].mass = mass,
-  bodies[0].color = MAROON;
-  
-  bodies[1].x = cx + p,
-  bodies[1].y = cy + p,
-  bodies[1].z = 100,
-  bodies[1].mass = mass*0.7,
-  bodies[1].color = GOLD;
-  
-  bodies[2].x = cx + p,
-  bodies[2].y = cy - p,
-  bodies[2].z = 0,
-  bodies[2].mass = mass*0.6,
-  bodies[2].color = SKYBLUE;
+  init_body(&bodies[0], cx - p, cy - p, 250, mass, MAROON);
+  init_body(&bodies[1], cx + p, cy + p, 100, mass*0.7, GOLD);
+  init_body(&bodies[2], cx + p, cy - p, 0, mass*0.6, SKYBLUE);
 }
 
 Vector2 get_camera_pos(Body* bodies, size_t n) {
@@ -166,6 +161,10 @@ int main(void) {
   camera.rotation = 0.0f;
   camera.zoom = 1.0f;
   while (!WindowShouldClose()) {
+    if (IsKeyPressed(KEY_R)) {
+        init_bodies(bodies);
+    }
+
     BeginDrawing();
       camera.target = get_camera_pos(bodies, N);
       BeginMode2D(camera);
