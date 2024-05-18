@@ -19,19 +19,17 @@
 
 typedef struct {
   float mass;
-  float x;
-  float y;
-  float z;
-  float vx;
-  float vy;
-  float vz;
-  float fx;
-  float fy;
-  float fz;
+  Vector3 pos;
+  Vector3 vel;
+  Vector3 force;
   Vector2 trail[TRAIL_LENGTH];
   size_t trail_pos;
   Color color;
 } Body;
+
+Vector2 Vector3ToVector2(Vector3 v) {
+  return (Vector2) { v.x, v.y };
+}
 
 void draw_body_trail(Body body) {
   for (size_t i = 0; i < TRAIL_LENGTH - 1; i++) {
@@ -46,63 +44,55 @@ void draw_body_trail(Body body) {
 }
 
 void draw_body(Body body) {
-  float s = body.z * 0.02;
+  float s = body.pos.z * 0.02;
   if (s < 1) s = 1;
-  DrawCircle(body.x + s/2, body.y + s/2, s, body.color);
+  DrawCircle(body.pos.x + s/2, body.pos.y + s/2, s, body.color);
   draw_body_trail(body);
 }
 
 float distance(Body* a, Body* b) {
-  return sqrt(pow((b->x - a->x), 2) + pow((b->y - a->y), 2) + pow((b->z - a->z), 2));
+  return sqrt(
+    pow((b->pos.x - a->pos.x), 2) + 
+    pow((b->pos.y - a->pos.y), 2) + 
+    pow((b->pos.z - a->pos.z), 2));
 }
 
 void apply_forces(Body* bodies, size_t n, float dt) {
   for(size_t i = 0; i < n; i++) {
     Body* b = &bodies[i];
     float m = b->mass;
-    b->fy = (-G * m) * b->fy;
-    b->fx = (-G * m) * b->fx;
-    b->fz = (-G * m) * b->fz;
+    b->force = Vector3Scale(b->force, -G * m);
 
-    float ax = b->fy / m;
-    float ay = b->fx / m;
-    float az = b->fz / m;
+    Vector3 a = Vector3Scale(b->force, 1 / m);
+    float ax = b->force.x / m;
+    float ay = b->force.y / m;
+    float az = b->force.z / m;
     
-    b->vx += dt * ax;
-    b->vy += dt * ay;
-    b->vz += dt * az;
+    b->vel = Vector3Add(
+      b->vel,
+      Vector3Scale(a, dt));
 
     Vector2 ct = b->trail[b->trail_pos];
-    if ((int)ct.x != (int)b->x || (int)ct.y != (int)b->y) {
-      b->trail[b->trail_pos] = (Vector2) {
-        .x = b->x,
-        .y = b->y
-      };
+    if ((int)ct.x != (int)b->pos.x || (int)ct.y != (int)b->pos.y) {
+      b->trail[b->trail_pos] = Vector3ToVector2(b->pos);
       b->trail_pos = (b->trail_pos + 1) % TRAIL_LENGTH;
     }
 
-    b->x += dt * b->vx;
-    b->y += dt * b->vy;
-    b->z += dt * b->vz;
-
-    b->fy = 0.0;
-    b->fx = 0.0;
-    b->fz = 0.0;
+    b->pos = Vector3Add(
+      b->pos,
+      Vector3Scale(b->vel, dt));
+    b->force = Vector3Zero();
   }
 }
 
 void force(Body* s1, Body* s2) {
   float d = distance(s1, s2);
-  float delta_x = s1->x - s2->x;
-  float delta_y = s1->y - s2->y;
-  float delta_z = s1->z - s2->z;
-
   float m = s1->mass * s2->mass * G;
   float ds = pow(fabs(d) + EPS, 3);
-
-  s1->fy += (m * delta_x) / ds;
-  s1->fx += (m * delta_y) / ds;
-  s1->fz += (m * delta_z) / ds;
+  Vector3 delta = Vector3Subtract(s1->pos, s2->pos);
+  Vector3 delta_m = Vector3Scale(delta, m);
+  Vector3 f = Vector3Scale(delta_m, 1 / ds);
+  s1->force = Vector3Add(s1->force, f);
 }
 
 void sim(Body* bodies, size_t n, float dt) {
@@ -117,9 +107,7 @@ void sim(Body* bodies, size_t n, float dt) {
 
 void init_body(Body* b, float x, float y, float z, float mass, Color c) {
   *b = (Body) {0};
-  b->x = x;
-  b->y = y;
-  b->z = z;
+  b->pos = (Vector3) { x, y, z };
   b->mass = mass;
   b->color = c;
 }
@@ -137,7 +125,7 @@ void init_bodies(Body* bodies) {
 size_t camera_mode = N;
 Vector2 camera_pos(Body* bodies, size_t n) {
   if (camera_mode != N) {
-    return (Vector2) { bodies[camera_mode].x, bodies[camera_mode].y };
+    return Vector3ToVector2(bodies[camera_mode].pos);
   }
   int max_x = 0;
   int min_x = INT_MAX;
@@ -145,16 +133,16 @@ Vector2 camera_pos(Body* bodies, size_t n) {
   int min_y = INT_MAX;
   for (size_t i = 0; i < n; i++) {
     Body b = bodies[i];
-    if (b.x > max_x) max_x = b.x;
-    if (b.x < min_x) min_x = b.x;
+    if (b.pos.x > max_x) max_x = b.pos.x;
+    if (b.pos.x < min_x) min_x = b.pos.x;
 
-    if (b.y > max_y) max_y = b.y;
-    if (b.y < min_y) min_y = b.y;
+    if (b.pos.y > max_y) max_y = b.pos.y;
+    if (b.pos.y < min_y) min_y = b.pos.y;
   }
   return (Vector2) { min_x + (max_x - min_x) / 2, min_y + (max_y - min_y) / 2 };
 }
 
-void camera_cycle() {
+void camera_cycle_mode() {
   camera_mode = (camera_mode + 1) % (N + 1);
 }
 
@@ -164,16 +152,18 @@ int main(void) {
   
   InitWindow(WIDTH, HEIGHT, "Three-body");
   SetTargetFPS(60);
+  
   Camera2D camera = { 0 };
   camera.offset = (Vector2){ WIDTH / 2, HEIGHT / 2 };
   camera.rotation = 0.0f;
   camera.zoom = 1.0f;
+  
   while (!WindowShouldClose()) {
     if (IsKeyPressed(KEY_R)) {
       init_bodies(bodies);
     }
     if (IsKeyPressed(KEY_M)) {
-      camera_cycle();
+      camera_cycle_mode();
     }
 
     BeginDrawing();
