@@ -63,11 +63,7 @@ void apply_forces(Body* bodies, size_t n, float dt) {
     float m = b->mass;
     b->force = Vector3Scale(b->force, -G * m);
 
-    Vector3 a = Vector3Scale(b->force, 1 / m);
-    float ax = b->force.x / m;
-    float ay = b->force.y / m;
-    float az = b->force.z / m;
-    
+    Vector3 a = Vector3Scale(b->force, 1 / m);    
     b->vel = Vector3Add(
       b->vel,
       Vector3Scale(a, dt));
@@ -117,9 +113,11 @@ void init_bodies(Body* bodies) {
   float cx = WIDTH / 2;
   float cy = HEIGHT / 2;
   float p = 80;
+  srand(time(NULL));
+  float r = (float)rand() / RAND_MAX;
   init_body(&bodies[0], cx - p, cy - p, 250, mass, MAROON);
-  init_body(&bodies[1], cx + p, cy + p, 100, mass*0.7, GOLD);
-  init_body(&bodies[2], cx + p, cy - p, 0, mass*0.6, SKYBLUE);
+  init_body(&bodies[1], cx + p, cy + p, 100, mass*r, GOLD);
+  init_body(&bodies[2], cx + p, cy - p, 0, mass*r, SKYBLUE);
 }
 
 size_t camera_mode = N;
