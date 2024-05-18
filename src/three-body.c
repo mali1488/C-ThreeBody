@@ -134,7 +134,11 @@ void init_bodies(Body* bodies) {
   init_body(&bodies[2], cx + p, cy - p, 0, mass*0.6, SKYBLUE);
 }
 
-Vector2 get_camera_pos(Body* bodies, size_t n) {
+size_t camera_mode = N;
+Vector2 camera_pos(Body* bodies, size_t n) {
+  if (camera_mode != N) {
+    return (Vector2) { bodies[camera_mode].x, bodies[camera_mode].y };
+  }
   int max_x = 0;
   int min_x = INT_MAX;
   int max_y = 0;
@@ -150,6 +154,10 @@ Vector2 get_camera_pos(Body* bodies, size_t n) {
   return (Vector2) { min_x + (max_x - min_x) / 2, min_y + (max_y - min_y) / 2 };
 }
 
+void camera_cycle() {
+  camera_mode = (camera_mode + 1) % (N + 1);
+}
+
 int main(void) {
   Body bodies[N] = {0};
   init_bodies(bodies);
@@ -162,11 +170,14 @@ int main(void) {
   camera.zoom = 1.0f;
   while (!WindowShouldClose()) {
     if (IsKeyPressed(KEY_R)) {
-        init_bodies(bodies);
+      init_bodies(bodies);
+    }
+    if (IsKeyPressed(KEY_M)) {
+      camera_cycle();
     }
 
     BeginDrawing();
-      camera.target = get_camera_pos(bodies, N);
+      camera.target = camera_pos(bodies, N);
       BeginMode2D(camera);
         ClearBackground(BLACK);
         sim(bodies, N, GetFrameTime());
