@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#set -xe
+set -xe
 if [ "$(uname)" == "Linux" ]; then 
     export LD_LIBRARY_PATH=deps/linux
     CC="gcc"
