@@ -51,10 +51,7 @@ void draw_body(Body body) {
 }
 
 float distance(Body* a, Body* b) {
-  return sqrt(
-    pow((b->pos.x - a->pos.x), 2) + 
-    pow((b->pos.y - a->pos.y), 2) + 
-    pow((b->pos.z - a->pos.z), 2));
+  return Vector3Distance(a->pos, b->pos);
 }
 
 void apply_forces(Body* bodies, size_t n, float dt) {
